@@ -1,8 +1,9 @@
 import json
 import os
 import re
-import boto3
 import uuid
+
+import boto3
 
 s3 = boto3.client('s3')
 
@@ -18,14 +19,14 @@ def lambda_handler(event, context):
     s3_bucket_name = event['Records'][0]['s3']['bucket']['name']
 
     contact_id = get_contact_id(s3_key)
-    job_name = f'{contact_id}{str(uuid.uuid4())}'
+    job_name = f'transcript/{contact_id}{str(uuid.uuid4())}'
 
     s3_url = f'https://s3-{s3_region}.amazonaws.com/{s3_bucket_name}/{s3_key}'
 
     step_input = {
         'S3ObjectURL': s3_url,
         'ContactID': contact_id,
-        'job_name': job_name
+        'JobName': job_name
         }
 
     response = step_client.start_execution(
@@ -41,8 +42,13 @@ def lambda_handler(event, context):
     }
 
 
-# Regular Expression to create a unique ID for the Job in Step Function
+
+
 def get_contact_id(s3_key_val):
+    """
+    the s3 object url will often contain characters that are not accepted, so use of regular expression here (may nbe
+    not
+    needed depending on what you're using it for"""
     key = s3_key_val
     contact_id = re.search(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}(?=_)",
                            key).group(0)

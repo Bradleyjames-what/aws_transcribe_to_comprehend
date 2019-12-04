@@ -1,6 +1,7 @@
-import boto3
 import json
 import os
+
+import boto3
 
 s3_region = os.environ['S3_REGION']
 transcribe = boto3.client('transcribe')
@@ -12,22 +13,28 @@ def lambda_handler(event, context):
     print(json.dumps(event))
     file_object = event['S3ObjectURL']
     contact_id = event['ContactID']
-    job_name = event['job_name']
+    job_name = event['JobName']
 
     try:
         response = transcribe.start_transcription_job(
             TranscriptionJobName=job_name,
             Media={'MediaFileUri': f'{file_object}'},
-            MediaFormat='wav',
+            MediaFormat='mp3',
             LanguageCode='en-US',
+            'ContactId' = contact_id
         )
     except Exception as inst:
         print(inst)
         raise inst
     status = response['ResponseMetadata']['HTTPStatusCode']
     if status == 200:
-        response['ContactId'] = contact_id
-        print(response)
-        return response['TranscriptionJob']
+        return step_output{
+            'Output' : f"Successfully started transcription process"
+            TaskToken: 'Success'
+            }
     else:
-        raise Exception("Transcription job failed to start")
+        return step_output{
+            TaskToken : 'Failure'
+            }
+        # raise Exception("Transcription job failed to start")
+

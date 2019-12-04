@@ -1,0 +1,86 @@
+{
+  "StartAt": "Function Invoked",
+  "States": {
+    "AWSEvent": {
+      "Comment": "Step Function Invoked",
+      "Type": "Object",
+      "Next": "Start Transcribe Job"
+    },
+    "Start Transcribe Job": {
+  "Type": "Task",
+  "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+  "Parameters": {
+    "FunctionName": "arn:aws:lambda:us-west-2:678028879118:function:start_audio_transcription:$LATEST",
+      "Input.$": "$.step_input",
+      "TaskToken.$": "$$.Task.Token",
+
+  },
+  "Next": "Check Transcribe Status",
+      },
+    "Check Transcribe Status": {
+      "Type": "Task",
+      "Resource": "${checkTranscribe.Arn}",
+      "InputPath": "$.transcribe",
+      "ResultPath": "$.transcribeStatus",
+      "Next": "Is Transcribe Completed?"
+    },
+    ,"Wait for Transcribe Completion": {
+      "Type": "Wait",
+      "Seconds": 60,
+      "Next": "Check Transcribe Status"
+    },
+    "Is Transcribe Completed?": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.transcribeStatus.status",
+          "StringEquals": "COMPLETED",
+          "Next": "Process Transcription"
+        }
+      ],
+      "Default": "Wait for Transcribe Completion",
+
+
+
+
+
+
+
+
+
+
+
+      "Retry": [
+        {
+          "ErrorEquals": [ "States.ALL" ],
+          "IntervalSeconds": 120,
+          "BackoffRate": 2,
+          "MaxAttempts": 3
+        }
+      ]
+    },
+"Invoke Choice State": {
+    "Type": "Choice",
+    "Choices": [
+    {
+      "Fail": {
+        "Variable": "$.taskToken",
+        "StringEquals": "Fail",
+        "Next": "Fatal error"
+      },
+     "Success": {
+      "Variable": "$.taskToken",
+      "StringEquals": "Success",
+      "Next": "Check Job Status"
+    }
+    }
+    ]
+
+
+    "Check Job Status"
+
+
+}
+        }
+      }
+    },
